@@ -30,7 +30,7 @@ export const AddContact = () => {
         }
 
         actions.createContact(contact, () => {
-            navigate("/");
+            navigate("/contacts");
         });
     };
 
@@ -88,7 +88,7 @@ export const AddContact = () => {
                             Guardar
                         </button>
                         <div className="mt-3 text-center">
-                            <Link to="/">o volver a contactos</Link>
+                            <Link to="/contacts">o volver a contactos</Link>
                         </div>
                     </form>
                 </div>

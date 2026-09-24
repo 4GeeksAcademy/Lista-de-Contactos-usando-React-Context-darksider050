@@ -15,7 +15,7 @@ export const Contact = () => {
             <div className="row justify-content-center">
                 <div className="col-10 col-md-8 d-flex justify-content-between align-items-center my-4">
                     <h1>Mis Contactos</h1>
-                    <Link to="/add" className="btn btn-success">
+                    <Link to="/add-contact" className="btn btn-success">
                         Añadir nuevo contacto
                     </Link>
                 </div>
