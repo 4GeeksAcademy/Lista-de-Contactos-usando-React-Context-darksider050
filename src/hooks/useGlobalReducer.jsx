@@ -1,24 +1,92 @@
-// Import necessary hooks and functions from React.
-import { useContext, useReducer, createContext } from "react";
-import storeReducer, { initialStore } from "../store"  // Import the reducer and the initial state.
+/* eslint-disable react-refresh/only-export-components */
+import PropTypes from "prop-types";
+import { createContext, useContext, useMemo, useReducer } from "react";
+import { initialStore, storeReducer } from "../store";
 
-// Create a context to hold the global state of the application
-// We will call this global state the "store" to avoid confusion while using local states
-const StoreContext = createContext()
+const StoreContext = createContext();
 
-// Define a provider component that encapsulates the store and warps it in a context provider to 
-// broadcast the information throught all the app pages and components.
 export function StoreProvider({ children }) {
-    // Initialize reducer with the initial state.
-    const [store, dispatch] = useReducer(storeReducer, initialStore())
-    // Provide the store and dispatch method to all child components.
-    return <StoreContext.Provider value={{ store, dispatch }}>
-        {children}
-    </StoreContext.Provider>
+    const [store, dispatch] = useReducer(storeReducer, initialStore());
+
+    const actions = useMemo(() => ({
+        getContacts: async () => {
+            try {
+                const response = await fetch("https://playground.4geeks.com/contact/agendas/darksider050/contacts");
+                if (!response.ok) {
+                    console.error("Error al cargar los contactos");
+                    return;
+                }
+
+                const data = await response.json();
+                dispatch({
+                    type: "load_contacts",
+                    payload: Array.isArray(data.contacts) ? data.contacts : []
+                });
+            } catch (error) {
+                console.error("Error en la petición GET:", error);
+            }
+        },
+
+        createContact: async (contactData, callback) => {
+            try {
+                const response = await fetch("https://playground.4geeks.com/contact/agendas/darksider050/contacts", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(contactData)
+                });
+
+                if (!response.ok) {
+                    console.error("Error al crear el contacto");
+                    return;
+                }
+
+                const newContact = await response.json();
+                dispatch({
+                    type: "add_contact",
+                    payload: newContact
+                });
+
+                if (callback) callback();
+            } catch (error) {
+                console.error("Error en la petición POST:", error);
+            }
+        },
+
+        deleteContact: async (id) => {
+            try {
+                const response = await fetch(`https://playground.4geeks.com/contact/agendas/darksider050/contacts/${id}`, {
+                    method: "DELETE"
+                });
+
+                if (!response.ok) {
+                    console.error("Error al eliminar el contacto");
+                    return;
+                }
+
+                dispatch({ type: "delete_contact", payload: id });
+            } catch (error) {
+                console.error("Error en la petición DELETE:", error);
+            }
+        }
+    }), []);
+
+    return (
+        <StoreContext.Provider value={{ store, dispatch, actions }}>
+            {children}
+        </StoreContext.Provider>
+    );
 }
 
-// Custom hook to access the global state and dispatch function.
 export default function useGlobalReducer() {
-    const { dispatch, store } = useContext(StoreContext)
-    return { dispatch, store };
+    const context = useContext(StoreContext);
+
+    if (!context) {
+        throw new Error("useGlobalReducer must be used within a StoreProvider");
+    }
+
+    return context;
 }
+
+StoreProvider.propTypes = {
+    children: PropTypes.node.isRequired
+};
